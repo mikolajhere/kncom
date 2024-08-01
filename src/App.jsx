@@ -2,16 +2,16 @@ import { useState } from "react";
 import { UseMultistepForm } from "./components/UseMultistepForm";
 import { UserForm } from "./components/UserForm";
 import { ThankYouForm } from "./components/ThankYouForm";
-import "../src/styles/App.css"; 
+import "../src/styles/App.css";
 import { useAddHiddenInputs } from "./scripts/Hidden";
 
 const INITIAL_DATA = {
   dataLog: "",
   dataPhone: "",
   dataEmailTemplate: "kancelarianieruchomosci.com.php",
-  dataSMSTemplate: "kancelarianieruchomosci.com.php", 
-  "dataValues[serviceDataType]": 252, 
-  "dataValues[serviceClientChannel]": 39, 
+  dataSMSTemplate: "kancelarianieruchomosci.com.php",
+  "dataValues[serviceDataType]": 252,
+  "dataValues[serviceClientChannel]": 39,
   dataUpdateEmail: "",
   docs: "",
   submit: 1,
@@ -39,11 +39,10 @@ export const App = () => {
     });
   }
 
-  const { isFirstStep, step, isSecondStep, isLastStep, next } =
-    UseMultistepForm([
-      <UserForm {...data} updateFields={updateFields} />,
-      <ThankYouForm {...data} updateFields={updateFields} />,
-    ]);
+  const { isFirstStep, step, isLastStep, next } = UseMultistepForm([
+    <UserForm key={1} {...data} updateFields={updateFields} />,
+    <ThankYouForm key={2} {...data} updateFields={updateFields} />,
+  ]);
 
   function onSubmit(e) {
     e.preventDefault();
@@ -69,9 +68,6 @@ export const App = () => {
             dataEmailTemplate: "kancelarianieruchomosci.com.php",
           });
           console.log("Endpoint Success: ", data);
-          gtag("event", "conversion", {
-            send_to: "AW-725933870/jm4tCM7Z9LMBEK6-k9oC",
-          });
         })
         .catch((error) => {
           console.error("Endpoint Error: ", error);
@@ -81,7 +77,7 @@ export const App = () => {
         dataEmailTemplate: "kancelarianieruchomosci.com.php",
         clientHash: data.clientHash,
         submit: 1,
-      }); 
+      });
     } else if (!isLastStep) {
       console.log(data);
       fetch("", {
