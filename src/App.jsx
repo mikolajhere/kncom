@@ -80,7 +80,7 @@ export const App = () => {
       });
     } else if (!isLastStep) {
       console.log(data);
-      fetch("", {
+      fetch("https://system.pewnylokal.pl/crm/api/updateClientData.php?format=json", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
