@@ -26,12 +26,24 @@ export const App = () => {
 
   const hiddensObj = {};
 
-  setTimeout(() => {
-    const hiddens = document.querySelectorAll("input[type='hidden']");
-    hiddens.forEach((hidden) => {
-      hiddensObj[hidden.name] = hidden.value;
-    });
-  }, 1);
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hash = urlParams.get("hash");
+    if (hash) {
+      setData((prevData) => ({
+        ...prevData,
+        clientHash: hash,
+      }));
+      next(); // Move to the next step if hash is present
+    }
+
+    setTimeout(() => {
+      const hiddens = document.querySelectorAll("input[type='hidden']");
+      hiddens.forEach((hidden) => {
+        hiddensObj[hidden.name] = hidden.value;
+      });
+    }, 1);
+  }, []);
 
   function updateFields(fields) {
     setData((prev) => {
