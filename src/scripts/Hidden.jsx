@@ -35,10 +35,10 @@ export const useAddHiddenInputs = (formId, updateData) => {
           return c.substring(name.length, c.length);
         }
       }
-      return undefined;
+      return "";
     };
 
-    if (typeof getCookie("clientFirstVisitPage") === "undefined") {
+    if (!getCookie("clientFirstVisitPage")) {
       const now = new Date();
       setCookie("clientFirstVisitPage", window.location.href, 30);
       setCookie(
