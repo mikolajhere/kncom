@@ -1,61 +1,46 @@
 import { useEffect } from "react";
 
-export const useAddHiddenInputs = (formId, inputs) => {
+export const useAddHiddenInputs = (formId, updateData) => {
   useEffect(() => {
     console.log("Pewny Lokal Tracker - inicjalizacja");
-    [
-      "serviceUtmForm",
+
+    const cookiesTags = [
+      "serviceUtmSource",
       "serviceUtmMedium",
       "serviceUtmCampaign",
-      "serviceUtmSource",
       "serviceUtmTerm",
-      "clientFirstVisitTime",
       "clientFirstVisitPage",
-      "hash",
-    ].forEach(function (e) {
-      typeof document.getElementsByName("dataValues[" + e + "]")[0] !=
-        "undefined" &&
-        console.log(
-          "Pewny Lokal Tracker - błąd! istnieje pole dataValues[" + e + "]"
-        );
-    });
+      "clientFirstVisitTime",
+      "serviceUtmForm",
+    ];
 
-    function setCookie(cname, cvalue, exdays) {
-      var d = new Date();
+    const setCookie = (cname, cvalue, exdays) => {
+      const d = new Date();
       d.setTime(d.getTime() + exdays * 24 * 60 * 60 * 1000);
-      var expires = "expires=" + d.toUTCString();
-      if (location.hostname == "pewnylokal.pl") {
-        document.cookie =
-          cname +
-          "=" +
-          cvalue +
-          ";" +
-          expires +
-          ";domain=.pewnylokal.pl;path=/";
-      } else {
-        document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
-      }
-    }
+      const expires = "expires=" + d.toUTCString();
+      const domain =
+        location.hostname === "pewnylokal.pl" ? ";domain=.pewnylokal.pl" : "";
+      document.cookie = `${cname}=${cvalue};${expires}${domain};path=/`;
+    };
 
-    function getCookie(cname) {
-      var name = cname + "=";
-      var ca = document.cookie.split(";");
-      for (var i = 0; i < ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0) == " ") {
+    const getCookie = (cname) => {
+      const name = cname + "=";
+      const ca = document.cookie.split(";");
+      for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === " ") {
           c = c.substring(1);
         }
-        if (c.indexOf(name) == 0) {
+        if (c.indexOf(name) === 0) {
           return c.substring(name.length, c.length);
         }
       }
       return undefined;
-    }
+    };
 
     if (typeof getCookie("clientFirstVisitPage") === "undefined") {
-      let now = new Date();
-
-      setCookie("clientFirstVisitPage", window.location, 30);
+      const now = new Date();
+      setCookie("clientFirstVisitPage", window.location.href, 30);
       setCookie(
         "clientFirstVisitTime",
         now.toLocaleDateString("pl-PL", {
@@ -69,36 +54,28 @@ export const useAddHiddenInputs = (formId, inputs) => {
       );
     }
 
-    var parts = window.location.search.substring(1).split("&");
-    var GET = {};
-
-    for (var i = 0; i < parts.length; i++) {
-      var temp = parts[i].split("=");
-      GET[decodeURIComponent(temp[0])] = decodeURIComponent(temp[1]);
-    }
-
-    if (typeof GET["utm_source"] !== "undefined") {
-      setCookie("serviceUtmSource", GET["utm_source"], 30);
-    }
-    if (typeof GET["utm_medium"] !== "undefined") {
-      setCookie("serviceUtmMedium", GET["utm_medium"], 30);
-    }
-    if (typeof GET["utm_campaign"] !== "undefined") {
-      setCookie("serviceUtmCampaign", GET["utm_campaign"], 30);
-    }
-
-    if (typeof GET["utm_term"] !== "undefined") {
-      setCookie("serviceUtmTerm", GET["utm_term"], 30);
-    }
+    const urlParams = new URLSearchParams(window.location.search);
+    [
+      "utm_source",
+      "utm_medium",
+      "utm_campaign",
+      "utm_term",
+      "gclid",
+      "fbclid",
+    ].forEach((param) => {
+      if (urlParams.get(param)) {
+        setCookie(param, urlParams.get(param), 30);
+      }
+    });
 
     if (!getCookie("serviceUtmSource")) {
-      if (typeof GET["gclid"] !== "undefined") {
+      if (urlParams.get("gclid")) {
         setCookie("serviceUtmSource", "adwords", 30);
         setCookie("serviceUtmMedium", "paid", 30);
         setCookie("serviceUtmCampaign", "unknown", 30);
         setCookie("serviceUtmTerm", "unknown", 30);
       }
-      if (typeof GET["fbclid"] !== "undefined") {
+      if (urlParams.get("fbclid")) {
         setCookie("serviceUtmSource", "facebook", 30);
         setCookie("serviceUtmMedium", "social", 30);
         setCookie("serviceUtmCampaign", "unknown", 30);
@@ -107,8 +84,7 @@ export const useAddHiddenInputs = (formId, inputs) => {
     }
 
     if (!getCookie("serviceUtmSource")) {
-      var ref = document.referrer;
-      console.log(ref);
+      const ref = document.referrer;
       if (ref.includes("google")) {
         setCookie("serviceUtmSource", "google", 30);
         setCookie("serviceUtmMedium", "organic", 30);
@@ -116,133 +92,81 @@ export const useAddHiddenInputs = (formId, inputs) => {
         setCookie("serviceUtmTerm", "unknown", 30);
       }
     }
-    setCookie("serviceUtmForm", window.location, 1);
 
-    var cookiesTags = [
-      "serviceUtmSource",
-      "serviceUtmMedium",
-      "serviceUtmCampaign",
-      "serviceUtmTerm",
-      "clientFirstVisitPage",
-      "clientFirstVisitTime",
-      "serviceUtmForm",
-    ];
-    var inputs = [];
+    setCookie("serviceUtmForm", window.location.href, 1);
 
-    const form = document.querySelector("form");
-    if (!form) return;
+    const hiddensObj = {};
+    cookiesTags.forEach((tag) => {
+      const value = getCookie(tag);
+      hiddensObj[`dataValues[${tag}]`] = value || ""; // Set empty string if value is undefined
+    });
 
-    for (const i in cookiesTags) {
-      if (
-        typeof document.getElementsByName(
-          "dataValues[" + cookiesTags[i] + "]"
-        )[0] == "undefined"
-      ) {
-        const hiddenInput = document.createElement("input");
-        hiddenInput.type = "hidden";
-        hiddenInput.name = "dataValues[" + cookiesTags[i] + "]";
-        hiddenInput.value = getCookie(cookiesTags[i]);
-        form.appendChild(hiddenInput);
-      }
+    // Update the data state in App component
+    if (typeof updateData === "function") {
+      updateData(hiddensObj);
     }
 
-    // Zapisywanie formularza
-    var hash = (Math.random() + 1).toString(36).substring(7);
-    var inputHash = document.createElement("input");
-    inputHash.setAttribute("type", "hidden");
-    inputHash.setAttribute("name", "hash");
-    inputHash.setAttribute("value", hash);
-
-    var forms = document.getElementsByTagName("form");
-    for (let i = 0; i < forms.length; i++) {
-      if (forms[i].getAttribute("method") == "get") {
-        continue;
-      }
-
-      for (let j = 0; j < inputs.length; j++) {
-        let icopy = inputs[j].cloneNode();
-        forms[i].appendChild(icopy);
-      }
-      let icopy = inputHash.cloneNode();
-
-      forms[i].appendChild(icopy);
-    }
-
-    if (typeof GET["utm_campaign"] !== "undefined") {
-      setCookie("serviceUtmCampaign", GET["utm_campaign"], 30);
-    }
-
-    function getValueOrNull(element) {
-      try {
-        return element.value;
-      } catch {
-        return null;
-      }
-    }
-    function save(e) {
-      var form = e.target.form;
-      if (form) {
-        var tekst =
-          "<big><b>Domena: " + window.location.hostname + "</b></big>";
-        var inputs = form.querySelectorAll("input,select");
-        for (let i = 0; i < inputs.length; i++) {
-          try {
-            tekst =
-              tekst +
-              "<br>" +
-              inputs[i].getAttribute("name") +
-              ": " +
-              inputs[i].value;
-          } catch (Error) {
-            console.log(inputs[i].getAttribute("name"), Error);
-          }
+    // Create and append hidden inputs to the form
+    const form = document.querySelector(`#${formId}`);
+    if (form) {
+      cookiesTags.forEach((tag) => {
+        if (!form.querySelector(`[name="dataValues[${tag}]"]`)) {
+          const hiddenInput = document.createElement("input");
+          hiddenInput.type = "hidden";
+          hiddenInput.name = `dataValues[${tag}]`;
+          hiddenInput.value = getCookie(tag) || ""; // Set empty string if value is undefined
+          form.appendChild(hiddenInput);
         }
+      });
+    }
+
+    const save = (e) => {
+      const form = e.target.form;
+      if (form) {
+        let tekst = `<big><b>Domena: ${window.location.hostname}</b></big>`;
+        const inputs = form.querySelectorAll("input,select");
+        inputs.forEach((input) => {
+          try {
+            tekst += `<br>${input.name}: ${input.value}`;
+          } catch (Error) {
+            console.log(input.name, Error);
+          }
+        });
 
         const xhr = new XMLHttpRequest();
-
         xhr.open(
           "POST",
           "https://pewnylokal.pl/rezerwacja-terminu/include/request.php"
         );
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        xhr.onload = function () {
+        xhr.onload = () => {
           if (xhr.status === 200) {
             console.log(xhr.responseText);
-          } else if (xhr.status !== 200) {
+          } else {
             console.log("Request failed.  Returned status of " + xhr.status);
           }
         };
         xhr.send(
           JSON.stringify({
-            hash: getValueOrNull(
-              form.querySelectorAll("input[name='hash']")[0]
-            ),
-            phone: getValueOrNull(
-              form.querySelectorAll("input[name='dataPhone']")[0]
-            ),
-            email: getValueOrNull(
-              form.querySelectorAll("input[name='dataEmail']")[0]
-            ),
-            datalog: getValueOrNull(
-              form.querySelectorAll("textarea[name='dataLog']")[0].value
-            ),
-            inne_dane:
-              tekst +
-              "<br>dataValues[serviceDataType]:252<br>dataLog:" +
-              document.querySelectorAll("textarea[name='dataLog']")[0].value,
+            hash: form.querySelector("input[name='hash']")?.value || null,
+            phone: form.querySelector("input[name='dataPhone']")?.value || null,
+            email: form.querySelector("input[name='dataEmail']")?.value || null,
+            city:
+              form.querySelector(
+                "input[name='dataValues[serviceDataAddressCity]']"
+              )?.value || null,
+            inne_dane: tekst + "<br>dataValues[serviceDataType]:344",
           })
         );
       }
-    }
-    var inputs = document.querySelectorAll(
-      "input:not(.nosave),select:not(.nosave)"
-    );
-    for (let i = 0; i < inputs.length; i++) {
-      inputs[i].addEventListener("change", function (e) {
-        save(e);
+    };
+
+    document
+      .querySelectorAll("input:not(.nosave),select:not(.nosave)")
+      .forEach((input) => {
+        input.addEventListener("change", save);
       });
-    }
 
     console.log("Pewny Lokal Tracker - wykonano");
-  }, []);
+  }, []); // Empty dependency array to run the effect only once
 };

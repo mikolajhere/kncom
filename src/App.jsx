@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UseMultistepForm } from "./components/UseMultistepForm";
 import { UserForm } from "./components/UserForm";
 import { ThankYouForm } from "./components/ThankYouForm";
@@ -22,9 +22,15 @@ const INITIAL_DATA = {
 export const App = () => {
   const [data, setData] = useState(INITIAL_DATA);
 
-  useAddHiddenInputs("my-form", []);
+  // Callback function to update data state
+  const updateData = (newData) => {
+    setData((prevData) => ({
+      ...prevData,
+      ...newData,
+    }));
+  };
 
-  const hiddensObj = {};
+  useAddHiddenInputs("my-form", updateData);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -36,13 +42,6 @@ export const App = () => {
       }));
       next(); // Move to the next step if hash is present
     }
-
-    setTimeout(() => {
-      const hiddens = document.querySelectorAll("input[type='hidden']");
-      hiddens.forEach((hidden) => {
-        hiddensObj[hidden.name] = hidden.value;
-      });
-    }, 1);
   }, []);
 
   function updateFields(fields) {
@@ -60,7 +59,7 @@ export const App = () => {
     e.preventDefault();
 
     if (isFirstStep) {
-      const formData = { ...data, ...hiddensObj };
+      const formData = { ...data };
       console.log({ formData });
       fetch(
         "https://system.pewnylokal.pl/crm/api/newEndpoint.php?format=json",
@@ -92,13 +91,16 @@ export const App = () => {
       });
     } else if (!isLastStep) {
       console.log(data);
-      fetch("https://system.pewnylokal.pl/crm/api/updateClientData.php?format=json", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
+      fetch(
+        "https://system.pewnylokal.pl/crm/api/updateClientData.php?format=json",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      )
         .then((response) => {
           response.json();
         })
@@ -126,7 +128,7 @@ export const App = () => {
       </nav>
       <div className="container">
         <h1>Formularz kontaktowy</h1>
-        <form onSubmit={onSubmit}>
+        <form onSubmit={onSubmit} id="my-form">
           {step}
           {isLastStep ? (
             <></>
