@@ -155,7 +155,7 @@ export const useAddHiddenInputs = (formId, updateData) => {
               form.querySelector(
                 "input[name='dataValues[serviceDataAddressCity]']"
               )?.value || null,
-            inne_dane: tekst + "<br>dataValues[serviceDataType]:344",
+            inne_dane: tekst + "<br>dataValues[serviceDataType]:252",
           })
         );
       }
